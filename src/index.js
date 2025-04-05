@@ -121,8 +121,8 @@ async function initializeModel() {
     initStatus.textContent = 'Initializing model...';
     log('Initializing WebLLM model...');
     
-    // Clear caches first to prevent issues with normal browser windows
-    await clearWebLLMCaches();
+    // We won't clear caches anymore - this was preventing reuse
+    // await clearWebLLMCaches();
     
     // Set up progress callback
     const initProgressCallback = (progress) => {
@@ -174,21 +174,21 @@ async function initializeModel() {
       log(progressText);
     };
     
-    // Create MLCEngine instance with caching disabled
-    log('Creating MLCEngine instance...');
+    // Create MLCEngine instance with caching enabled
+    log('Creating MLCEngine instance (using cache if available)...');
     engine = new MLCEngine({
       initProgressCallback: initProgressCallback,
-      // Add specific configuration to handle cache issues
+      // Use consistent session ID and don't force fresh downloads
       wasmConfig: {
-        // Use a unique session ID to avoid cache conflicts
-        sessionId: `mlc-session-${Date.now()}`,
-        // Prefer fresh downloads over cached data
-        freshDownload: true
+        // Use the same session ID every time to enable caching
+        sessionId: 'mlc-session-fixed',
+        // Allow using cached files
+        freshDownload: false
       }
     });
     
-    // Choose a smaller model for faster loading
-    const modelName = "TinyLlama-1.1B-Chat-v0.4-q4f32_1-MLC";
+    // Choose the Qwen2 model
+    const modelName = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC";
     log(`Loading model: ${modelName}`);
     
     // Load the model (this is an asynchronous operation and can take time)
@@ -249,6 +249,13 @@ async function summarizeText() {
       { role: "user", content: `Please summarize the following text in 3-4 sentences:\n\n${text}` }
     ];
     
+    // Display the prompt details to the user
+    log('-------------- PROMPT DETAILS --------------');
+    log(`System prompt: "${messages[0].content}"`);
+    log(`User prompt: "${messages[1].content.substring(0, 50)}${messages[1].content.length > 50 ? '...' : ''}"`);
+    log(`Temperature: 0.7, Top-p: 0.9, Max tokens: 2048`);
+    log('-------------------------------------------');
+    
     log('Sending request to model...');
     
     // Use the chat completions API as shown in the documentation
@@ -289,7 +296,19 @@ function addResetButton() {
   resetButton.className = 'btn btn-warning';
   resetButton.style.marginTop = '10px';
   resetButton.onclick = function() {
-    log('Resetting application and clearing caches...');
+    log('Resetting application...');
+    // Don't clear caches, just reload
+    setTimeout(() => window.location.reload(), 500);
+  };
+  
+  // Add a separate button for clearing cache if needed
+  const clearCacheButton = document.createElement('button');
+  clearCacheButton.textContent = 'Clear Cache & Reset';
+  clearCacheButton.className = 'btn btn-danger';
+  clearCacheButton.style.marginTop = '10px';
+  clearCacheButton.style.marginLeft = '10px';
+  clearCacheButton.onclick = function() {
+    log('Clearing caches and resetting application...');
     clearWebLLMCaches().then(() => {
       log('Reset complete. Reloading page...');
       setTimeout(() => window.location.reload(), 1000);
@@ -297,6 +316,7 @@ function addResetButton() {
   };
   
   resetButtonContainer.appendChild(resetButton);
+  resetButtonContainer.appendChild(clearCacheButton);
   container.appendChild(resetButtonContainer);
 }
 
@@ -318,5 +338,5 @@ document.addEventListener('DOMContentLoaded', () => {
   addResetButton();
   
   log('WebLLM Text Summarizer loaded. Click "Initialize Model" to start.');
-  log('Using real WebLLM library with TinyLlama model');
+  log('Using real WebLLM library with Qwen2 model');
 }); 
