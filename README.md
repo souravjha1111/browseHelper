@@ -1,6 +1,14 @@
 # WebLLM Text Summarizer
 
-A simple application that uses WebLLM to summarize text. The application uses the TinyLlama model for fast inference.
+A browser-based application that uses WebLLM to summarize text locally in your browser. This application leverages the TinyLlama model for fast, private text summarization without sending your data to external servers.
+
+## Features
+
+- 🔒 **Privacy-focused**: All processing happens locally in your browser
+- ⚡ **Fast processing**: Uses the lightweight TinyLlama model optimized for browsers
+- 🌐 **No server required**: Works completely client-side
+- 💻 **Cross-browser compatible**: Works in modern browsers with polyfills for cache issues
+- 🔄 **Self-contained**: Includes cache management to prevent common issues
 
 ## Setup
 
@@ -9,32 +17,60 @@ A simple application that uses WebLLM to summarize text. The application uses th
 npm install
 ```
 
-2. Start the server:
+2. Build the application:
+```bash
+npm run build
+```
+
+3. Start the development server:
 ```bash
 npm start
 ```
 
-3. Open your browser and navigate to http://localhost:8080
+4. Open your browser and navigate to http://localhost:8080
+
+## Development
+
+For continuous development with automatic rebuilding:
+```bash
+npm run watch
+```
 
 ## Usage
 
 1. Click the "Initialize Model" button to download and initialize the WebLLM model
-2. Wait for the model to finish loading (progress will be shown)
+2. Wait for the model to finish loading (progress will be shown in the UI)
 3. Enter or paste text in the text area
 4. Click "Summarize Text" to generate a summary
 
 ## How it Works
 
-This application uses the WebLLM library loaded directly from a CDN (https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.78/dist/web-llm.js) to run language models in your browser.
+This application uses the [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) library to run language models directly in your browser using WebAssembly. The application:
 
-The TinyLlama model is a lightweight model that can run efficiently in browser environments. The first time you initialize the model, it will be downloaded to your browser's cache. Subsequent uses will load the model from cache, making initialization faster.
+1. Loads the WebLLM engine using ES modules
+2. Downloads the TinyLlama-1.1B-Chat-v0.4 model (quantized for browser performance)
+3. Processes text inputs through the model to generate summaries
+4. Provides real-time progress feedback for model loading and inference
+
+The first time you initialize the model, it will be downloaded to your browser's cache (~450MB). Subsequent uses will load the model from cache, making initialization faster.
 
 ## Troubleshooting
 
 If you encounter any issues:
 
-1. Check the console output in the browser's developer tools (F12)
-2. Make sure your browser supports WebGL and WebAssembly
-3. Ensure you have a stable internet connection for the initial model download
-4. Try using a different browser if you encounter persistent issues
-5. Clear your browser cache if you experience stale data problems 
+1. **Cache problems**: Use the "Reset Application" button to clear WebLLM caches
+2. **Incognito mode**: The application works reliably in incognito/private browsing windows
+3. **Browser compatibility**: Make sure your browser supports WebGL2 and WebAssembly
+4. **Memory issues**: Close other tabs/applications if you encounter out-of-memory errors
+5. **Debug logs**: Check the console output area in the UI for detailed progress and error information
+
+## Browser Compatibility
+
+- ✅ Chrome/Edge (recommended)
+- ✅ Firefox
+- ✅ Safari (WebGPU support in newer versions)
+- ❓ Mobile browsers (limited support due to memory constraints)
+
+## License
+
+MIT 
