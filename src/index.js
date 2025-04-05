@@ -125,11 +125,53 @@ async function initializeModel() {
     await clearWebLLMCaches();
     
     // Set up progress callback
-    const initProgressCallback = (progress, total) => {
-      const percent = total > 0 ? Math.round((progress / total) * 100) : 0;
+    const initProgressCallback = (progress) => {
+      // Handle different progress report formats
+      let progressText = '';
+      let percent = 0;
+      
+      if (typeof progress === 'object') {
+        // Format depends on the stage of loading
+        if (progress.progress && progress.total) {
+          // Regular download progress
+          percent = Math.round((progress.progress / progress.total) * 100);
+          progressText = `Loading progress: ${progress.progress}/${progress.total} (${percent}%)`;
+        } else if (progress.text) {
+          // Text status update
+          progressText = progress.text;
+          // Extract percentage if available in the text
+          const percentMatch = progress.text.match(/(\d+)%/);
+          if (percentMatch) {
+            percent = parseInt(percentMatch[1]);
+          }
+        } else if (progress.type === 'init') {
+          // Initialization stage
+          progressText = `Initializing: ${progress.text || 'Setting up model'}`;
+          percent = progress.progress || 0;
+        } else if (progress.type === 'download') {
+          // Download stage
+          progressText = `Downloading: ${progress.text || ''} - ${Math.round(progress.progress * 100)}%`;
+          percent = Math.round(progress.progress * 100);
+        } else {
+          // Unknown object format - create a meaningful message
+          progressText = `Processing: ${JSON.stringify(progress)}`;
+          percent = 10; // Default to show some progress
+        }
+      } else if (typeof progress === 'number' && typeof arguments[1] === 'number') {
+        // Classic format with two numeric arguments (progress, total)
+        const total = arguments[1];
+        percent = total > 0 ? Math.round((progress / total) * 100) : 0;
+        progressText = `Loading progress: ${progress}/${total} (${percent}%)`;
+      } else {
+        // Simple number format
+        percent = Math.round(progress * 100);
+        progressText = `Loading: ${percent}%`;
+      }
+      
+      // Update UI
       progressFill.style.width = `${percent}%`;
-      initStatus.textContent = `Loading model: ${percent}%`;
-      log(`Loading progress: ${progress}/${total} (${percent}%)`);
+      initStatus.textContent = progressText;
+      log(progressText);
     };
     
     // Create MLCEngine instance with caching disabled
